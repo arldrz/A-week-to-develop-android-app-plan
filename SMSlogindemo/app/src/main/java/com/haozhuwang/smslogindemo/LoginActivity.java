@@ -8,6 +8,7 @@ import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -31,7 +32,7 @@ import java.util.regex.Pattern;
  * Created by Administrator on 2018/1/9
  */
 
-public class LoginActivity extends AppCompatActivity implements View.OnClickListener{
+public class LoginActivity extends AppCompatActivity implements View.OnClickListener,View.OnTouchListener{
     private int countSeconds = 60;//倒计时秒数
     private EditText mobile_login, yanzhengma;
     private Button getyanzhengma1, login_btn;
@@ -49,6 +50,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         mContext = this;
         setContentView(R.layout.activity_login);
+
         initView();
         initEvent();
         initData();
@@ -61,7 +63,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         getyanzhengma1 = (Button) findViewById(R.id.getyanzhengma1);
         yanzhengma = (EditText) findViewById(R.id.yanzhengma);
         login_btn = (Button) findViewById(R.id.login_btn);
-        //login_btn.setOnTouchListener(this);
+        login_btn.setEnabled(false);
+        login_btn.setOnTouchListener( this);
 
         //1.创建工具类对象 把要改变颜色的tv先传过去
         WorksSizeCheckUtil.textChangeListener textChangeListener = new WorksSizeCheckUtil.textChangeListener(login_btn);
@@ -74,15 +77,18 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             @Override
             public void textChange(boolean isHasContent) {
                 if(isHasContent){
-                    login_btn.setEnabled(true);
+                  login_btn.setBackgroundResource(R.drawable.button_normal);
                 }else{
                     login_btn.setEnabled(false);
-
+                   login_btn.setBackgroundResource(R.drawable.button_zhihui);
                 }
             }
         });
 
     }
+
+
+
 
 
     private void initEvent() {
@@ -247,7 +253,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         }
     };
 
-   /* @Override
+
+
+    @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
 
                 if(motionEvent.getAction() == MotionEvent.ACTION_DOWN){
@@ -259,8 +267,5 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 }
                 return false;
             }
-*/
-
-
 
 }

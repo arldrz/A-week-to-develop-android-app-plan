@@ -17,7 +17,7 @@ import android.widget.EditText;
  * @author wwj_748
  * @date 2015年6月11日 上午11:57:36
  */
-public class CleanEditText extends EditText {
+public class CleanEditText extends android.support.v7.widget.AppCompatEditText {
 	
 	private final String TAG = "editText";
 	
