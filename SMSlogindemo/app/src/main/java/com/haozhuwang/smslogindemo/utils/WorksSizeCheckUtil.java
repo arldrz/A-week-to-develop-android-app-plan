@@ -64,7 +64,7 @@ public class WorksSizeCheckUtil {
                     button.setEnabled(true);
                 }else {
                     button.setEnabled(false);
-                    Log.i("TAG", "有edittext没值了");
+                    Log.i("TAG", "有些edittext没值");
                     mChangeListener.textChange(false);
                 }
             }
@@ -80,7 +80,7 @@ public class WorksSizeCheckUtil {
          */
         private boolean checkAllEdit() {
             for (EditText editText:editTexts){
-                if (!TextUtils.isEmpty(editText.getText() + "")){
+                if (!TextUtils.isEmpty(editText.getText().toString().trim())){
                     continue;
                 }else {
                     return false;

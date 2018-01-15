@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.haozhuwang.smslogindemo.utils.IEditTextChangeListener;
+import com.haozhuwang.smslogindemo.utils.VerifyCodeManager;
 import com.haozhuwang.smslogindemo.utils.WorksSizeCheckUtil;
 
 import org.json.JSONException;
@@ -24,113 +25,108 @@ import org.xutils.common.Callback;
 import org.xutils.http.RequestParams;
 import org.xutils.x;
 
+import java.util.Timer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
+import static com.haozhuwang.smslogindemo.R.id.getyanzhengma1;
+import static com.haozhuwang.smslogindemo.R.id.mobile_login;
+import static com.haozhuwang.smslogindemo.R.id.yanzhengma;
 
 
 /**
  * Created by Administrator on 2018/1/9
  */
 
-public class LoginActivity extends AppCompatActivity implements View.OnClickListener,View.OnTouchListener{
-    private int countSeconds = 60;//倒计时秒数
-    private EditText mobile_login, yanzhengma;
-    private Button getyanzhengma1, login_btn;
+public class LoginActivity extends AppCompatActivity implements  View.OnTouchListener {
+    @BindView(R.id.cancel)
+    ImageView mCancel;
+    @BindView(mobile_login)
+    EditText mMobileLogin;
+    @BindView(yanzhengma)
+    EditText mYanzhengma;
+    @BindView(getyanzhengma1)
+    Button mGetyanzhengma1;
+    @BindView(R.id.login_btn)
+    Button mLoginBtn;
+    //倒计时秒数
+    private int countSeconds = 60;
+    private int recLen = 60;
+    private Timer timer = new Timer();
+
     private Context mContext;
     private String usersuccess;
     private String userinfomsg;
     private String mToken;
     private String mUserId;
-    private ImageView mIv_cancel;
+    private VerifyCodeManager codeManager;
 
-
+    private static final String TAG = "LoginActivity";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         mContext = this;
         setContentView(R.layout.activity_login);
-
+        ButterKnife.bind(this);
         initView();
-        initEvent();
         initData();
 
     }
 
     private void initView() {
-        mobile_login = (EditText) findViewById(R.id.mobile_login);
-        mIv_cancel = (ImageView) findViewById(R.id.iv_cancel);
-        getyanzhengma1 = (Button) findViewById(R.id.getyanzhengma1);
-        yanzhengma = (EditText) findViewById(R.id.yanzhengma);
-        login_btn = (Button) findViewById(R.id.login_btn);
-        login_btn.setEnabled(false);
-        login_btn.setOnTouchListener( this);
+
+        mLoginBtn.setEnabled(false);
+        mLoginBtn.setOnTouchListener(this);
 
         //1.创建工具类对象 把要改变颜色的tv先传过去
-        WorksSizeCheckUtil.textChangeListener textChangeListener = new WorksSizeCheckUtil.textChangeListener(login_btn);
+        WorksSizeCheckUtil.textChangeListener textChangeListener = new WorksSizeCheckUtil.textChangeListener(mLoginBtn);
 
         //2.把所有要监听的edittext都添加进去
-        textChangeListener.addAllEditText(mobile_login,yanzhengma);
+        textChangeListener.addAllEditText(mMobileLogin, mYanzhengma);
 
         //3.接口回调 在这里拿到boolean变量 根据isHasContent的值决定 tv 应该设置什么颜色
         WorksSizeCheckUtil.setChangeListener(new IEditTextChangeListener() {
             @Override
             public void textChange(boolean isHasContent) {
-                if(isHasContent){
-                  login_btn.setBackgroundResource(R.drawable.button_normal);
-                }else{
-                    login_btn.setEnabled(false);
-                   login_btn.setBackgroundResource(R.drawable.button_zhihui);
+                if (isHasContent) {
+                    mLoginBtn.setBackgroundResource(R.drawable.button_normal);
+                } else {
+                    mLoginBtn.setEnabled(false);
+                    mLoginBtn.setBackgroundResource(R.drawable.button_zhihui);
                 }
             }
         });
 
     }
 
-
-
-
-
-    private void initEvent() {
-        getyanzhengma1.setOnClickListener(this);
-        login_btn.setOnClickListener(this);
-    }
     private void initData() {
     }
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.getyanzhengma1:
-                if (countSeconds == 60) {
-                    String mobile = mobile_login.getText().toString();
-                    Log.e("tag", "mobile==" + mobile);
-                    getMobiile(mobile);
-                } else {
-                    Toast.makeText(LoginActivity.this, "不能重复发送验证码", Toast.LENGTH_SHORT).show();
-                }
-                break;
-            case R.id.login_btn:
-                login();
-                break;
-            default:
-                break;
-        }
-    }
-    //获取信息进行登录
+
+
+
+    /**获取信息进行登录*/
     public void login() {
-        String mobile = mobile_login.getText().toString().trim();
-        String verifyCode = yanzhengma.getText().toString().trim();
+        String mobile = mMobileLogin.getText().toString().trim();
+        String verifyCode = mYanzhengma.getText().toString().trim();
         RequestParams params = new RequestParams("请求接口");
         x.http().post(params, new Callback.ProgressCallback<String>() {
             @Override
             public void onWaiting() {
             }
+
             @Override
             public void onStarted() {
             }
+
             @Override
             public void onLoading(long total, long current, boolean isDownloading) {
             }
+
             @Override
             public void onSuccess(String result) {
                 try {
@@ -138,34 +134,38 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     Log.e("tag", "登陆的result=" + jsonObject);
                     String success = jsonObject.optString("success");
                     String data = jsonObject.optString("data");
-                    String msg=jsonObject.optString("msg");
+                    String msg = jsonObject.optString("msg");
                     if ("true".equals(success)) {
-                        Log.e("tag","登陆的data="+data);
+                        Log.e("tag", "登陆的data=" + data);
                         JSONObject json = new JSONObject(data);
                         mToken = json.optString("token");
                         mUserId = json.optString("userId");
                         //我这里按照我的要求写的，你们也可以适当改动
                         //获取用户信息的状态
                         //getUserInfo();
-                    }else{
+                    } else {
                         Toast.makeText(LoginActivity.this, msg, Toast.LENGTH_SHORT).show();
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
             }
+
             @Override
             public void onError(Throwable ex, boolean isOnCallback) {
             }
+
             @Override
             public void onCancelled(CancelledException cex) {
             }
+
             @Override
             public void onFinished() {
             }
         });
     }
-    //获取验证码信息，判断是否有手机号码
+
+    /**获取验证码信息，判断是否有手机号码*/
     private void getMobiile(String mobile) {
         if ("".equals(mobile)) {
             Log.e("tag", "mobile=" + mobile);
@@ -177,19 +177,23 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             requestVerifyCode(mobile);
         }
     }
-    //获取验证码信息，进行验证码请求
+
+    /**获取验证码信息，进行验证码请求*/
     private void requestVerifyCode(String mobile) {
         RequestParams requestParams = new RequestParams("这里是你请求的验证码接口，参数什么的加在后面");
         x.http().post(requestParams, new Callback.ProgressCallback<String>() {
             @Override
             public void onWaiting() {
             }
+
             @Override
             public void onStarted() {
             }
+
             @Override
             public void onLoading(long total, long current, boolean isDownloading) {
             }
+
             @Override
             public void onSuccess(String result) {
                 try {
@@ -200,7 +204,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     Log.e("tag", "获取验证码==" + verifyCode);
                     if ("true".equals(state)) {
                         Toast.makeText(LoginActivity.this, verifyCode, Toast.LENGTH_SHORT).show();
-                        startCountBack();//这里是用来进行请求参数的
+                        //startCountBack();//这里是用来进行请求参数的
                     } else {
                         Toast.makeText(LoginActivity.this, verifyCode, Toast.LENGTH_SHORT).show();
                     }
@@ -208,31 +212,36 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     e.printStackTrace();
                 }
             }
+
             @Override
             public void onError(Throwable ex, boolean isOnCallback) {
                 ex.printStackTrace();
             }
+
             @Override
             public void onCancelled(CancelledException cex) {
             }
+
             @Override
             public void onFinished() {
             }
         });
     }
-    //使用正则表达式判断电话号码
+
+    /**使用正则表达式判断电话号码*/
     public static boolean isMobileNO(String tel) {
         Pattern p = Pattern.compile("^(13[0-9]|15([0-3]|[5-9])|14[5,7,9]|17[1,3,5,6,7,8]|18[0-9])\\d{8}$");
         Matcher m = p.matcher(tel);
         System.out.println(m.matches() + "---");
         return m.matches();
     }
-    //获取验证码信息,进行计时操作
+
+    /**获取验证码信息,进行计时操作*/
     private void startCountBack() {
         ((Activity) mContext).runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                getyanzhengma1.setText(countSeconds + "");
+                mGetyanzhengma1.setText(countSeconds + "");
                 mCountHandler.sendEmptyMessage(0);
             }
         });
@@ -244,28 +253,54 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             super.handleMessage(msg);
             if (countSeconds > 0) {
                 --countSeconds;
-                getyanzhengma1.setText("("+ countSeconds+")后获取验证码");
                 mCountHandler.sendEmptyMessageDelayed(0,1000);
+                mGetyanzhengma1.setText("(" + countSeconds + ")后获取验证码");
+
             } else {
                 countSeconds = 60;
-                getyanzhengma1.setText("请重新获取验证码");
+                mGetyanzhengma1.setText("请重新获取验证码");
             }
         }
     };
 
 
-
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
 
-                if(motionEvent.getAction() == MotionEvent.ACTION_DOWN){
-                    //更改为按下时的背景图片
-                    view.setBackgroundResource(R.drawable.button_press2);
-                }else if(motionEvent.getAction() == MotionEvent.ACTION_UP){
-                    //改为抬起时的图片
-                    view.setBackgroundResource(R.drawable.button_normal);
-                }
-                return false;
-            }
+        if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+            //更改为按下时的背景图片
+            view.setBackgroundResource(R.drawable.button_press2);
+        } else if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+            //改为抬起时的图片
+            view.setBackgroundResource(R.drawable.button_normal);
+        }
+        return false;
+    }
 
+
+    @OnClick({R.id.cancel, R.id.getyanzhengma1, R.id.login_btn})
+    public void onViewClicked(View view) {
+        switch (view.getId()) {
+            case R.id.cancel:
+                finish();
+                break;
+            case R.id.getyanzhengma1:
+                if (countSeconds == 60) {
+                    String mobile = mMobileLogin.getText().toString().trim();
+                    Log.d(TAG, "mobile==" + mobile);
+                    getMobiile(mobile);
+                  // codeManager.getVerifyCode(VerifyCodeManager.RESET_PWD);
+
+                } else {
+                     //获取手机号
+                    Toast.makeText(LoginActivity.this, "不能重复发送验证码", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            case R.id.login_btn:
+                login();
+                break;
+            default:
+                break;
+        }
+    }
 }
